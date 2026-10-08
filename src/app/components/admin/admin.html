@@ -1,0 +1,206 @@
+<div class="pro-layout">
+  <!-- Sidebar -->
+  <aside class="pro-sidebar">
+    <div class="sidebar-brand">
+      <img src="/assets/images/museo/logo-cafe.png" alt="Logo" class="brand-logo">
+      <div class="brand-text">
+        <h2>CAFÉ AYACUCHANO</h2>
+        <span>Panel Supremo</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button [class.active]="tabActivo==='dashboard'" (click)="cambiarTab('dashboard')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"/></svg>
+        Vista General
+      </button>
+      <button [class.active]="tabActivo==='usuarios'" (click)="cambiarTab('usuarios')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+        Directorio Staff
+      </button>
+      <button [class.active]="tabActivo==='ventas'" (click)="cambiarTab('ventas')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+        Auditoría Ventas
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-ghost" (click)="ir('/')">Volver a Tienda</button>
+      <button class="btn-logout" (click)="cerrarSesion()">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/></svg>
+        Desconectar
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="pro-main">
+    <header class="top-header">
+      <div class="greeting">
+        <h1>Dashboard, <span class="text-gold">{{ adminActual?.nombre?.split(' ')[0] }}</span></h1>
+        <p>Resumen gerencial y control total</p>
+      </div>
+      @if(cargando) { <div class="loader-spinner"></div> }
+    </header>
+
+    @if(tabActivo==='dashboard') {
+      <div class="fade-in">
+        <div class="stats-grid mb-8">
+          <div class="stat-card">
+            <div class="icon-wrap"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+            <div class="stat-info">
+              <p>Ingresos Totales</p>
+              <h3><span class="text-gold">S/</span>{{ ingresosTotales | number:'1.2-2' }}</h3>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-wrap"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg></div>
+            <div class="stat-info">
+              <p>Órdenes Totales</p>
+              <h3>{{ ventas.length }}</h3>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="icon-wrap"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg></div>
+            <div class="stat-info">
+              <p>Miembros Staff</p>
+              <h3>{{ usuarios.length }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if(tabActivo==='usuarios') {
+      <div class="content-panel fade-in">
+        <div class="panel-header flex-between">
+          <h3>Directorio Staff</h3>
+          <div class="search-box w-auto">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+            <input placeholder="Buscar por nombre..." [(ngModel)]="terminoBusquedaUsuario" (input)="filtrarUsuarios()">
+          </div>
+        </div>
+
+        <div class="custom-table-wrap mt-8">
+          <table class="pro-table">
+            <thead><tr><th>Identidad</th><th>Email</th><th>Rol Actual</th><th>Acciones de Seguridad</th></tr></thead>
+            <tbody>
+              @for(u of usuariosFiltrados; track u.id_usuario) {
+                <tr>
+                  <td>
+                    <div class="user-info">
+                      <div class="avatar">{{ u.nombre.charAt(0) | uppercase }}</div>
+                      <div>
+                        <strong>{{ u.nombre }}</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-muted">{{ u.email }}</td>
+                  <td>
+                    <select class="pro-select" [value]="u.rol" (change)="cambiarRol(u.id_usuario, $event)">
+                      <option value="cliente">Cliente</option>
+                      <option value="empleado">Staff</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </td>
+                  <td>
+                    <button class="action-btn" (click)="resetearRuleta(u.id_usuario)" title="Reiniciar cupones">
+                      <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                      Reset Ruleta
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="text-center py-10">No hay usuarios con ese nombre.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if(tabActivo==='ventas') {
+      <div class="content-panel fade-in">
+        <div class="panel-header flex-between">
+          <h3>Auditoría de Transacciones</h3>
+          <select class="pro-select w-auto" [(ngModel)]="filtroTiempoVentas" (change)="aplicarFiltrosVentas()">
+            <option value="todos">Historial Completo</option>
+            <option value="dia">Últimas 24 Hrs</option>
+            <option value="semana">Últimos 7 Días</option>
+            <option value="mes">Último Mes</option>
+          </select>
+        </div>
+
+        <div class="custom-table-wrap mt-8">
+          <table class="pro-table">
+            <thead><tr><th># Venta</th><th>Fecha Operación</th><th>Atendido Por</th><th>Total S/</th><th>Verificar Pago</th></tr></thead>
+            <tbody>
+              @for(v of ventasFiltradas; track v.id_reserva) {
+                <tr>
+                  <td class="font-black">ORD-{{ v.id_reserva | number:'3.0' }}</td>
+                  <td class="text-muted">{{ (v.fechaPedido || v.fecha_reserva) | date:'medium' }}</td>
+                  <td><span class="badge">{{ v.empleadoAtencion?.nombre || v.empleado_nombre || 'Online' }}</span></td>
+                  <td class="text-gold font-xl font-black">S/ {{ v.total_pagado | number:'1.2-2' }}</td>
+                  <td>
+                    @if(v.comprobante_pago || v.comprobante) {
+                      <button class="action-btn" (click)="verComprobante(v.comprobante_pago || v.comprobante)">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+                        Voucher
+                      </button>
+                    } @else {
+                      <span class="text-muted text-sm">Sin evidencia</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="text-center py-10">No hay ventas registradas.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </main>
+</div>
+
+<!-- Modal Autorización -->
+@if(modalSeguridadAbierto) {
+  <div class="modal-backdrop fade-in" (click)="cerrarModalSeguridad()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+      </div>
+      <h3>Autorización Especial Requerida</h3>
+      <p>Ingresa tu clave maestra de Administrador para confirmar esta acción sensible en el sistema.</p>
+      
+      <div class="modal-form" style="margin-bottom: 2rem;">
+        <input type="password" class="pro-input" [(ngModel)]="passwordConfirmacion" placeholder="••••••••" (keyup.enter)="confirmarAccionSegura()">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" (click)="cerrarModalSeguridad()">Abortar</button>
+        <button class="btn-primary" (click)="confirmarAccionSegura()">Autorizar Comando</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Image Viewer Modal -->
+@if(modalImagenAbierto) {
+  <div class="modal-backdrop fade-in" (click)="cerrarModalImagen()">
+    <div class="modal-box" style="max-width: 800px; padding: 1rem;" (click)="$event.stopPropagation()">
+      <div class="flex-between mb-4 px-4 pt-4">
+        <h3 class="m-0">Voucher Adjunto</h3>
+        <button class="btn-ghost" style="padding: 0.5rem;" (click)="cerrarModalImagen()">Cerrar</button>
+      </div>
+      <img [src]="imagenSeleccionada" alt="Voucher" style="max-width: 100%; max-height: 70vh; border-radius: 12px; object-fit: contain;">
+    </div>
+  </div>
+}
+
+@if(toastMsg) {
+  <div class="pro-toast fade-in">
+    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    {{ toastMsg }}
+  </div>
+}

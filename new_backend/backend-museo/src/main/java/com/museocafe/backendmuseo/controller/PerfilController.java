@@ -1,0 +1,132 @@
+package com.museocafe.backendmuseo.controller;
+
+import com.museocafe.backendmuseo.model.Usuario;
+import com.museocafe.backendmuseo.repository.CuponRepository;
+import com.museocafe.backendmuseo.repository.PedidoRepository;
+import com.museocafe.backendmuseo.repository.UsuarioRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/perfil")
+/* =========================================================================================
+   [PRODUCCIÓN - DOMINIO] 
+   Cuando tengas tu dominio, cambia los orígenes para que solo tu web pueda consultar esta API.
+   Ejemplo: @CrossOrigin(origins = {"http://localhost:4200", "https://www.cafeayacuchano.com"})
+   ========================================================================================= */
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:80"})
+public class PerfilController {
+
+    private final UsuarioRepository usuarioRepository;
+    private final PedidoRepository pedidoRepository;
+    private final CuponRepository cuponRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    public PerfilController(UsuarioRepository usuarioRepository, PedidoRepository pedidoRepository, CuponRepository cuponRepository, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.pedidoRepository = pedidoRepository;
+        this.cuponRepository = cuponRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @GetMapping("/cargar/{idUsuario}")
+    public ResponseEntity<?> cargarPerfil(@PathVariable Long idUsuario) {
+        
+        /* 
+         * =====================================================================================
+         * SEGURIDAD AVANZADA (Para el futuro):
+         * Extraer al usuario desde el Token JWT para evitar que un cliente vea el perfil de otro.
+         * Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+         * Usuario usuarioAutenticado = usuarioRepository.findByEmail(auth.getName()).orElseThrow();
+         * Long idSeguro = usuarioAutenticado.getIdUsuario();
+         * =====================================================================================
+         */
+
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "mensaje", "Usuario no encontrado"));
+        }
+
+        Usuario usuario = usuarioOpt.get();
+        int visitas = usuario.getVisitasPresenciales() != null ? usuario.getVisitasPresenciales() : 0;
+        
+        Map<String, Object> nivel = new HashMap<>();
+        if (visitas >= 51) {
+            nivel.put("nivel", 5); nivel.put("next", "MAX"); nivel.put("texto", "Nivel Máximo"); nivel.put("progreso", 100);
+            nivel.put("beneficios", "¡Eres una leyenda! 15% de descuento permanente. Al acumular 4 compras puedes elegir premios premium.");
+        } else if (visitas >= 31) {
+            nivel.put("nivel", 4); nivel.put("next", 51); nivel.put("texto", "Nivel 5"); nivel.put("progreso", ((visitas - 31.0) / 20.0) * 100);
+            nivel.put("beneficios", "¡Socio Experto! 10% de descuento permanente.");
+        } else if (visitas >= 16) {
+            nivel.put("nivel", 3); nivel.put("next", 31); nivel.put("texto", "Nivel 4"); nivel.put("progreso", ((visitas - 16.0) / 15.0) * 100);
+            nivel.put("beneficios", "¡Socio Frecuente! 7% de descuento permanente.");
+        } else if (visitas >= 8) {
+            nivel.put("nivel", 2); nivel.put("next", 16); nivel.put("texto", "Nivel 3"); nivel.put("progreso", ((visitas - 8.0) / 8.0) * 100);
+            nivel.put("beneficios", "¡Socio Aficionado! Al acumular 4 compras elige entre: Cupón, Libro PDF o Llavero.");
+        } else if (visitas >= 3) {
+            nivel.put("nivel", 1); nivel.put("next", 8); nivel.put("texto", "Nivel 2"); nivel.put("progreso", ((visitas - 3.0) / 5.0) * 100);
+            nivel.put("beneficios", "¡Socio Oficial! Acumula 4 compras para un cupón del 25%.");
+        } else {
+            nivel.put("nivel", 0); nivel.put("next", 3); nivel.put("texto", "Nivel 1"); nivel.put("progreso", (visitas / 3.0) * 100);
+            nivel.put("beneficios", "Visita la cafetería para empezar a subir de nivel y desbloquear descuentos.");
+        }
+
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("success", true);
+        respuesta.put("usuario", usuario);
+        respuesta.put("datos_nivel", nivel);
+        
+        respuesta.put("historial", pedidoRepository.findByUsuarioIdUsuarioOrderByFechaPedidoDesc(idUsuario));
+        respuesta.put("cupones", cuponRepository.findByUsuarioIdUsuario(idUsuario));
+
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @PostMapping("/actualizar")
+    public ResponseEntity<?> actualizarPerfil(@RequestBody Map<String, Object> payload) {
+        Long idUsuario = Long.valueOf(payload.get("id_usuario").toString());
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "mensaje", "Usuario no encontrado"));
+        }
+
+        Usuario usuario = usuarioOpt.get();
+        
+        if (payload.containsKey("nombre")) usuario.setNombre(payload.get("nombre").toString());
+        if (payload.containsKey("email")) usuario.setEmail(payload.get("email").toString());
+        if (payload.containsKey("dni")) usuario.setDni(payload.get("dni").toString());
+        if (payload.containsKey("telefono")) usuario.setTelefono(payload.get("telefono").toString());
+
+        if (payload.containsKey("password") && payload.get("password") != null && !payload.get("password").toString().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(payload.get("password").toString()));
+        }
+
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Perfil actualizado con éxito"));
+    }
+
+    @PostMapping("/eliminar")
+    public ResponseEntity<?> eliminarCuenta(@RequestBody Map<String, Object> payload) {
+        Long idUsuario = Long.valueOf(payload.get("id_usuario").toString());
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "mensaje", "Usuario no encontrado"));
+        }
+
+        // Aquí deberías manejar la eliminación de dependencias si las hay o usar CascadeType.ALL en la entidad.
+        // Por ahora eliminamos al usuario directamente.
+        usuarioRepository.delete(usuarioOpt.get());
+
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Cuenta eliminada con éxito"));
+    }
+}

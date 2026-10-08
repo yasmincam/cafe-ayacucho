@@ -1,0 +1,129 @@
+package com.museocafe.backendmuseo.controller;
+
+import com.museocafe.backendmuseo.model.Cupon;
+import com.museocafe.backendmuseo.model.Noticia;
+import com.museocafe.backendmuseo.model.Usuario;
+import com.museocafe.backendmuseo.repository.CuponRepository;
+import com.museocafe.backendmuseo.repository.NoticiaRepository;
+import com.museocafe.backendmuseo.repository.UsuarioRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/marketing")
+/* =========================================================================================
+   [PRODUCCIÓN - DOMINIO] 
+   Cuando tengas tu dominio, cambia los orígenes para que solo tu web pueda consultar esta API.
+   Ejemplo: @CrossOrigin(origins = {"http://localhost:4200", "https://www.cafeayacuchano.com"})
+   ========================================================================================= */
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:80"})
+public class MarketingController {
+
+    private final CuponRepository cuponRepository;
+    private final NoticiaRepository noticiaRepository;
+    private final UsuarioRepository usuarioRepository; 
+
+    public MarketingController(CuponRepository cuponRepository, NoticiaRepository noticiaRepository, UsuarioRepository usuarioRepository) {
+        this.cuponRepository = cuponRepository;
+        this.noticiaRepository = noticiaRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    /* 
+     * =====================================================================================
+     * SEGURIDAD AVANZADA (Para el futuro):
+     * Spring Security ya bloquea estas rutas desde el SecurityConfig. 
+     * Cuando actualices Angular, puedes quitar el {idUsuario} de las URLs y obtener
+     * al usuario real directamente del token así:
+     * 
+     * Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+     * String emailUsuario = auth.getName();
+     * =====================================================================================
+     */
+
+    // ==========================================
+    // GESTIÓN DE CUPONES (Solo Admin)
+    // ==========================================
+    
+    @PostMapping("/cupones/guardar/{idUsuario}")
+    public ResponseEntity<?> guardarCupon(@PathVariable Long idUsuario, @RequestBody Map<String, Object> payload) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        
+        if (usuarioOpt.isEmpty() || !"admin".equals(usuarioOpt.get().getRol())) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "mensaje", "Acceso denegado: Solo los administradores pueden crear cupones."));
+        }
+
+        Cupon cupon = new Cupon();
+        cupon.setCodigo(payload.get("codigo_cupon").toString().toUpperCase()); 
+        cupon.setDescuentoPorcentaje(Integer.valueOf(payload.get("descuento").toString()));
+        cupon.setLimiteUsos(Integer.valueOf(payload.get("limite_usos").toString()));
+        
+        int diasValidez = Integer.parseInt(payload.getOrDefault("dias_validez", "30").toString());
+        cupon.setFechaVencimiento(LocalDateTime.now().plusDays(diasValidez));
+        
+        cuponRepository.save(cupon);
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Cupón creado exitosamente."));
+    }
+
+    @DeleteMapping("/cupones/eliminar/{idCupon}/usuario/{idUsuario}")
+    public ResponseEntity<?> eliminarCupon(@PathVariable Long idCupon, @PathVariable Long idUsuario) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        if (usuarioOpt.isEmpty() || !"admin".equals(usuarioOpt.get().getRol())) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "mensaje", "Acceso denegado."));
+        }
+
+        cuponRepository.deleteById(idCupon);
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Cupón eliminado."));
+    }
+
+    // ==========================================
+    // GESTIÓN DE NOTICIAS (Admin y Empleado)
+    // ==========================================
+    
+    @PostMapping("/noticias/guardar/{idUsuario}")
+    public ResponseEntity<?> guardarNoticia(@PathVariable Long idUsuario, @RequestBody Noticia noticia) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        
+        if (usuarioOpt.isEmpty() || (!"admin".equals(usuarioOpt.get().getRol()) && !"empleado".equals(usuarioOpt.get().getRol()))) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "mensaje", "Acceso denegado: Se requiere rol de administrador o empleado."));
+        }
+
+        noticiaRepository.save(noticia);
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Noticia publicada correctamente en el boletín."));
+    }
+
+    @DeleteMapping("/noticias/eliminar/{idNoticia}/usuario/{idUsuario}")
+    public ResponseEntity<?> eliminarNoticia(@PathVariable Long idNoticia, @PathVariable Long idUsuario) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        if (usuarioOpt.isEmpty() || (!"admin".equals(usuarioOpt.get().getRol()) && !"empleado".equals(usuarioOpt.get().getRol()))) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "mensaje", "Acceso denegado."));
+        }
+
+        noticiaRepository.deleteById(idNoticia);
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", "Noticia eliminada."));
+    }
+
+    @PostMapping("/noticias/toggle/{idNoticia}/usuario/{idUsuario}")
+    public ResponseEntity<?> toggleNoticia(@PathVariable Long idNoticia, @PathVariable Long idUsuario) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        if (usuarioOpt.isEmpty() || (!"admin".equals(usuarioOpt.get().getRol()) && !"empleado".equals(usuarioOpt.get().getRol()))) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "mensaje", "Acceso denegado."));
+        }
+
+        Optional<Noticia> noticiaOpt = noticiaRepository.findById(idNoticia);
+        if (noticiaOpt.isEmpty()) return ResponseEntity.badRequest().build();
+        
+        Noticia noticia = noticiaOpt.get();
+        noticia.setEstado(!noticia.getEstado()); 
+        noticiaRepository.save(noticia);
+        
+        String mensaje = noticia.getEstado() ? "Noticia ahora es pública." : "Noticia ocultada del catálogo.";
+        return ResponseEntity.ok(Map.of("success", true, "mensaje", mensaje));
+    }
+}
